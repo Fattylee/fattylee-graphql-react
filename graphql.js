@@ -21,8 +21,15 @@ const RootQuery = new GraphQLObjectType({
       type: UserType,
       args: { id: { type: GraphQLString } },
       resolve(parentArg, args) {
-        return { id: 1, name: "fattylee", age: 12 };
+        return global
+          .fetch("http://localhost.com/3000/users/" + args.id)
+          .then((res) => res.json());
       },
+    },
+    hello: {
+      type: GraphQLString,
+      args: { name: { type: GraphQLString } },
+      resolve: (parentValue, args) => "Hello, " + args.name,
     },
   },
 });
