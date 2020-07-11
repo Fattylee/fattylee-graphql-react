@@ -1,7 +1,21 @@
 {
-  "posts": [{ "id": 1, "title": "json-server", "author": "typicode" }],
-  "comments": [{ "id": 1, "body": "some comment", "postId": 1 }],
-  "profile": { "name": "typicode" },
+  "posts": [
+    {
+      "id": 1,
+      "title": "json-server",
+      "author": "typicode"
+    }
+  ],
+  "comments": [
+    {
+      "id": 1,
+      "body": "some comment",
+      "postId": 1
+    }
+  ],
+  "profile": {
+    "name": "typicode"
+  },
   "users": [
     {
       "id": 1,
@@ -17,6 +31,16 @@
       "id": 3,
       "firstName": "haleemah",
       "age": 72
+    },
+    {
+      "id": 4,
+      "firstName": "idea",
+      "age": 0
+    },
+    {
+      "firstName": "idea 2",
+      "age": 10,
+      "id": 5
     }
   ]
 }
