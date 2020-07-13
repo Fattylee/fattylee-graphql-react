@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon server/server.js",
+    "dev": "nodemon server/server.js -i db.json",
     "json-server": "json-server --watch db.json",
     "start": "PORT=4100 react-scripts start",
     "build": "react-scripts build",
@@ -25,7 +25,8 @@
     "graphql-tag": "^2.10.4",
     "lodash": "^4.17.19",
     "react-apollo": "^3.1.5",
-    "recompose": "^0.30.0"
+    "recompose": "^0.30.0",
+    "uuid": "^8.2.0"
   },
   "browserslist": {
     "production": [

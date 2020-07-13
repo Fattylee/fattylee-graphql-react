@@ -1,6 +1,6 @@
-const axios = require("axios");
+const _axios = require("axios");
+const { v4: uuid } = require("uuid");
 const _ = require("lodash");
-
 const {
   GraphQLSchema,
   GraphQLString,
@@ -11,30 +11,37 @@ const {
   GraphQLList,
 } = require("graphql");
 
-const books = [
-  { id: "1", title: "book 1", author: "2" },
-  { id: "2", title: "book 2", author: "2" },
-  { id: "3", title: "book 3", author: "1" },
-  { id: "4", title: "book 4", author: "3" },
-];
+const axios = _axios.create({
+  baseURL: "http://localhost:3000/",
+  timeout: 1000,
+  // headers: {'X-Custom-Header': 'foobar'}
+});
 
-const users = [
-  { id: "1", name: "abu lulu", age: 101 },
-  { id: "2", name: "ummu abdillah", age: 55 },
-  { id: "3", name: "abdullah ibn AbdulFattah", age: 01 },
-];
+// const books = [
+//   { id: "1", title: "book 1", authorId: "2" },
+//   { id: "2", title: "book 2", authorId: "2" },
+//   { id: "3", title: "book 3", authorId: "1" },
+//   { id: "4", title: "book 4", authorId: "3" },
+//   { id: "4", title: "book 4", authorId: "3" },
+// ];
+
+// const users = [
+//   { id: "1", name: "abu lulu", age: 101 },
+//   { id: "2", name: "ummu abdillah", age: 55 },
+//   { id: "3", name: "abdullah ibn AbdulFattah", age: 01 },
+// ];
 
 const UserType = new GraphQLObjectType({
   name: "User",
   fields: () => ({
     id: { type: new GraphQLNonNull(GraphQLID) },
-    name: { type: new GraphQLNonNull(GraphQLString) },
+    firstName: { type: new GraphQLNonNull(GraphQLString) },
     age: { type: new GraphQLNonNull(GraphQLInt) },
     books: {
-      type: new GraphQLList(BookType),
-      resolve: (parent, args) => {
-        console.log("parent USerType:", parent);
-        return _.filter(books, { author: parent.id });
+      type: new GraphQLList(new GraphQLNonNull(BookType)),
+      resolve: async (parent) => {
+        const { data: books } = await axios.get("/books");
+        return _.filter(books, { authorId: parent.id });
       },
     },
   }),
@@ -45,11 +52,12 @@ const BookType = new GraphQLObjectType({
   fields: () => ({
     id: { type: new GraphQLNonNull(GraphQLID) },
     title: { type: new GraphQLNonNull(GraphQLString) },
-    author: {
+    authorId: {
       type: new GraphQLNonNull(UserType),
-      resolve: (parent, args) => {
-        console.log("parent:", parent);
-        return _.find(users, { id: parent.author });
+      resolve: async (parent) => {
+        const { data: authors } = await axios.get("authors");
+        const author = _.find(authors, { id: parent.authorId });
+        return author;
       },
     },
   }),
@@ -58,32 +66,32 @@ const BookType = new GraphQLObjectType({
 const RootQuery = new GraphQLObjectType({
   name: "Query",
   fields: {
-    user: {
+    authors: {
+      type: new GraphQLList(new GraphQLNonNull(UserType)),
+      resolve: () => axios.get("authors").then((res) => res.data),
+    },
+    author: {
       type: new GraphQLNonNull(UserType),
       args: { id: { type: new GraphQLNonNull(GraphQLID) } },
-      resolve(parentArg, { id }) {
-        const user = _.find(users, { id });
-        if (!user) throw new Error("User not found!");
-        return user;
+      async resolve(parentArg, { id }) {
+        const { data: authors } = await axios.get("authors");
+        const author = _.find(authors, { id });
+        if (!author) throw new Error("User not found!");
+        return author;
       },
     },
     books: {
       type: new GraphQLList(new GraphQLNonNull(BookType)),
-      resolve: () => {
-        const allBooks = books.map((book) => {
-          return {
-            ...book,
-            author: _.find(users, { id: book.author }),
-          };
-        });
-        console.log(allBooks);
+      resolve: async () => {
+        const { data: books } = await axios("/books");
         return books;
       },
     },
     book: {
       type: new GraphQLNonNull(BookType),
       args: { id: { type: new GraphQLNonNull(GraphQLID) } },
-      resolve(parent, { id }) {
+      async resolve(parent, { id }) {
+        const { data: books } = await axios.get("/books");
         const book = _.find(books, { id });
         if (!book) throw new Error("Book not found!");
         return book;
@@ -99,15 +107,35 @@ const RootMutation = new GraphQLObjectType({
       type: new GraphQLNonNull(BookType),
       args: {
         title: { type: new GraphQLNonNull(GraphQLString) },
-        author: { type: new GraphQLNonNull(GraphQLString) },
+        authorId: { type: new GraphQLNonNull(GraphQLString) },
       },
-      resolve(parent, { title, author }) {
-        const id = books.length + 1;
-        return {
+      async resolve(parent, { title, authorId }) {
+        const id = uuid();
+        const { data: authors } = await axios.get("/authors");
+        const author = _.find(authors, { id: authorId });
+        if (!author)
+          throw new Error(`User with the Author id(${authorId}) was not found`);
+        const book = {
           id,
           title,
-          author: { id: "2", name: "ummu abdillah", age: 55 },
+          authorId,
         };
+
+        await axios.post("books", book);
+        return book;
+      },
+    },
+    addUser: {
+      type: new GraphQLNonNull(UserType),
+      args: {
+        firstName: { type: new GraphQLNonNull(GraphQLString) },
+        age: { type: new GraphQLNonNull(GraphQLInt) },
+      },
+      resolve: async (parent, { firstName, age }) => {
+        const id = uuid();
+        const author = { id, firstName, age };
+        await axios.post("authors", author);
+        return author;
       },
     },
   },

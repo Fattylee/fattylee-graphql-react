@@ -6,28 +6,20 @@ import { ApolloProvider, graphql } from "react-apollo";
 // import { flowRight as compose } from "lodash";
 import { compose } from "recompose";
 
-const query = gql`
-  query($salary: String!) {
-    hello(name: $salary)
+const mutation = gql(`
+  mutation addmore($title: String!){
+    createBook(title:$title,author:"1") {
+      id
+      title
+    }
   }
-`;
+`);
 
-const App = compose(
-  graphql(query, {
-    name: "ummu",
-    options: (prop) => {
-      // console.log("this is option", prop);
-      return { variables: { salary: "for ummu ok" } };
-    },
-  }),
-  graphql(query, {
-    name: "abu",
-    options: { variables: { salary: "648794927486789" } },
-  })
-)((props) => {
-  // props.ummu.variables.salary = "overrides";
-  // console.log(props);
+const App = graphql(mutation)((props) => {
+  // console.log(props.mutate());
   // console.log(props.ummu());
+  props.mutate({ variables: { title: "keeeeee" } });
+  console.log(props);
 
   return (
     <Fragment>
@@ -35,14 +27,15 @@ const App = compose(
       <div>this is a div</div>
       <h6>HI went</h6>
       <h3>header bext</h3>
-      <p>{props.ummu.hello}</p>
+      {/* <p>{props.data.hello}</p> */}
     </Fragment>
   );
 });
+
 const client = new ApolloClient({ uri: "http://localhost:4000/graphql" });
 render(
   <ApolloProvider client={client}>
-    <App gender="hi gender" />
+    <App />
   </ApolloProvider>,
   document.getElementById("root")
 );

@@ -1,0 +1,41 @@
+{
+  "books": [
+    {
+      "id": "1",
+      "title": "book one",
+      "authorId": "1"
+    },
+    {
+      "id": "2",
+      "title": "java",
+      "authorId": "1"
+    },
+    {
+      "id": "3",
+      "title": "js",
+      "authorId": "1"
+    },
+    {
+      "id": "4",
+      "title": "css",
+      "authorId": "1"
+    }
+  ],
+  "authors": [
+    {
+      "id": "1",
+      "firstName": "fatai",
+      "age": 22
+    },
+    {
+      "id": "2",
+      "firstName": "abullah",
+      "age": 22
+    },
+    {
+      "id": "3",
+      "firstName": "haleemah",
+      "age": 72
+    }
+  ]
+}
