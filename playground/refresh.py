@@ -1,15 +1,7 @@
 print('Hello, world')
-for i in range(10):
+for i in range(1):
     print(i)
-print('last line')
-
-print(
-    'ah nExt'.capitalize(),
-    'baba omo'.title(),
-    'CAs Folde'.casefold(),
-    'MAD man'.lower(),
-    'lower-upper'.upper()
-)
+print('last line', end='$')
 
 
 def sum(a, b):
@@ -17,3 +9,5 @@ def sum(a, b):
 
 
 print(sum(2, 4))
+t = (1, 2, 3)
+a = [1]

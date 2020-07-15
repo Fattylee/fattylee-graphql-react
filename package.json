@@ -26,7 +26,11 @@
     "graphql-tag": "^2.10.4",
     "lodash": "^4.17.19",
     "react-apollo": "^3.1.5",
+    "react-redux": "^7.2.0",
+    "react-router-dom": "^5.2.0",
     "recompose": "^0.30.0",
+    "redux": "^4.0.5",
+    "redux-thunk": "^2.3.0",
     "uuid": "^8.2.0"
   },
   "browserslist": {
