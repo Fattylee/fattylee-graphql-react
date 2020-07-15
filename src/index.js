@@ -5,6 +5,30 @@ import ApolloClient, { gql } from "apollo-boost";
 import { ApolloProvider, graphql } from "react-apollo";
 // import { flowRight as compose } from "lodash";
 import { compose } from "recompose";
+import { createStore, applyMiddleware, combineReducers } from "redux";
+import { Provider, connect } from "react-redux";
+import thunk from "redux-thunk";
+import { BrowserRouter as Router, Route, Link } from "react-router-dom";
+const authorReducer = (state = { firstName: "", age: 0, id: "" }, action) => {
+  switch (action.type) {
+    case "ADD_AUTHOR":
+      return { ...state, ...action.payload };
+    default:
+      return state;
+  }
+};
+const rootReducer = combineReducers({
+  author: authorReducer,
+});
+
+const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+const store = createStore(
+  rootReducer,
+  composeEnhancers(applyMiddleware(thunk))
+);
+
+const addAuthorAction = (payload) => (dispatch) =>
+  dispatch({ type: "ADD_AUTHOR", payload });
 
 const mutation = gql(`
   mutation addmore($title: String!){
@@ -24,84 +48,145 @@ const getAuthorsQuery = gql`
     }
   }
 `;
+
+// 443b 198b
 const deleteAuthorQuery = gql`
   mutation deleteAuthor($id: ID!) {
     removeAuthor(id: $id)
   }
 `;
 
+const authorDetailQuery = gql`
+  query getAuthor($id: ID!) {
+    author(id: $id) {
+      id
+      firstName
+      age
+      books {
+        id
+        title
+      }
+    }
+  }
+`;
+
 const mylist = (props) => {
-  console.log("pop", props);
   const { loading, error, authors } = props.getAuthors;
   if (loading) {
     return <div>Loading authors...</div>;
   }
-  if (!loading && !error) {
-    return authors.map(({ id, firstName, age }) => (
-      <li key={id}>
-        <p>firstName: {firstName}</p>
-        <small>Age: {age}</small>
-        <span
-          onClick={() => {
-            console.log("deleted");
-            props
-              .deleteAuthor({
-                variables: { id },
-                // refetchQueries: [{ query: getAuthorsQuery }],
-              })
-              .then((res) => props.getAuthors.refetch());
-          }}
-          style={{
-            fontSize: "20px",
-            color: "red",
-            margin: "10px",
-            cursor: "pointer",
-          }}
-        >
-          x
-        </span>
-        <span
-          onClick={(e) => {
-            const author = { id, firstName, age };
-            console.log("edited", author);
-          }}
-          style={{ cursor: "pointer" }}
-        >
-          EDIT
-        </span>
-      </li>
-    ));
-  }
+  if (authors.length === 0 && !error) return <h2>No Author yet</h2>;
+
+  return authors.map(({ id, firstName, age }) => (
+    <li key={id}>
+      <Link to={"/authors/" + id}>firstName: {firstName}</Link>
+      <span
+        onClick={() => {
+          props
+            .deleteAuthor({
+              variables: { id },
+              // refetchQueries: [{ query: getAuthorsQuery }],
+            })
+            .then((res) => props.getAuthors.refetch());
+        }}
+        style={{
+          fontSize: "20px",
+          color: "red",
+          margin: "10px",
+          cursor: "pointer",
+        }}
+      >
+        x
+      </span>
+      <span
+        onClick={(e) => {
+          const author = { id, firstName, age };
+          props.addAuthorAction(author);
+        }}
+        style={{ cursor: "pointer" }}
+      >
+        EDIT
+      </span>
+    </li>
+  ));
 };
 const _AuthorList = (props) => {
-  return <ul>{mylist(props)}</ul>;
+  return (
+    <Fragment>
+      <h2>Auhors List</h2>
+      <ul>{mylist(props)}</ul>
+      <h1 style={{ cursor: "pointer" }}>
+        <Link style={{ textDecoration: "none" }} to={"/add-author"}>
+          +
+        </Link>
+      </h1>
+    </Fragment>
+  );
 };
 
 const AuthorList = compose(
   graphql(getAuthorsQuery, { name: "getAuthors" }),
-  graphql(deleteAuthorQuery, { name: "deleteAuthor" })
+  graphql(deleteAuthorQuery, { name: "deleteAuthor" }),
+  connect(null, { addAuthorAction })
 )(_AuthorList);
 
-const _AddUser = (props) => {
+const _AuthorDetail = (props) => {
+  console.log("AuthorDetail:", props);
+  const {
+    data: { author: { firstName, age, id, books } = {} },
+  } = props;
+  if (props.data.loading) return <p>Loading author...</p>;
+  return (
+    <Fragment>
+      <p>
+        <Link to="/authors">Back</Link>
+      </p>
+      <h2>First Name: {firstName}</h2>
+      <p>Age: {age}</p>
+      {books.length ? <h3>Books</h3> : <h3>No books</h3>}
+      <ul>
+        {books.map((book) => (
+          <li key={book.id}>{book.title}</li>
+        ))}
+      </ul>
+    </Fragment>
+  );
+};
+const AuthorDetail = graphql(authorDetailQuery, {
+  // name: "getAthor",
+  options: (props) => {
+    const {
+      match: {
+        params: { id },
+      },
+    } = props;
+    return {
+      variables: { id },
+    };
+  },
+})(_AuthorDetail);
+
+const _AddAuthor = (props) => {
+  console.log("_AddUser props", props);
   const [{ firstName, age }, setAuthor] = useState({});
   return (
     <Fragment>
-      ======================
-      <br />
-      ======================
+      <p>
+        <Link to="/authors">Back</Link>
+      </p>
+      <h2>Create a new Author</h2>
       <form
         onSubmit={(e) => {
           e.preventDefault();
           const author = { firstName, age: parseInt(age) };
           setAuthor({ firstName: "", age: "" });
-          console.log(author);
           props
             .mutate({
               variables: author,
               refetchQueries: [{ query: getAuthorsQuery }],
             })
             .then((res) => {
-              console.log("Successfully addded!", res);
+              props.history.push("/authors");
             })
             .catch((ex) => {
               console.log("Something went wrong", ex);
@@ -140,7 +225,6 @@ const _AddUser = (props) => {
         </div>
         <input type="submit" value="Submit" />
       </form>
-      <p>firstName: {firstName}</p>
     </Fragment>
   );
 };
@@ -157,23 +241,46 @@ const addUserMutation = gql`
     }
   }
 `;
-const AddUser = graphql(addUserMutation)(_AddUser);
+const AddAuthor = compose(
+  graphql(addUserMutation),
+  connect((state) => state)
+)(_AddAuthor);
 
-const App = graphql(mutation)((props) => {
+const LandingPage = () => (
+  <Fragment>
+    <h1>React Apollo GraphQL</h1>
+    See the list of Authors <Link to="/authors">here</Link>
+  </Fragment>
+);
+const Header = () => (
+  <Fragment>
+    <Link to="/">Home</Link>
+  </Fragment>
+);
+const _App = (props) => {
   return (
     <Fragment>
-      <h1>React Apollo GraphQL</h1>
-      <AuthorList />
-      <AddUser />
+      <Router>
+        <Fragment>
+          <Header />
+          <Route path="/" exact component={LandingPage} />
+          <Route path="/authors" exact component={AuthorList} />
+          <Route path="/authors/:id" component={AuthorDetail} />
+          <Route path="/add-author" component={AddAuthor} />
+        </Fragment>
+      </Router>
     </Fragment>
   );
-});
+};
+const App = graphql(mutation)(_App);
 
 const client = new ApolloClient({ uri: "http://localhost:4000/graphql" });
 
 render(
-  <ApolloProvider client={client}>
-    <App />
-  </ApolloProvider>,
+  <Provider store={store}>
+    <ApolloProvider client={client}>
+      <App />
+    </ApolloProvider>
+  </Provider>,
   document.getElementById("root")
 );

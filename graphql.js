@@ -62,7 +62,7 @@ const RootQuery = new GraphQLObjectType({
       async resolve(parentArg, { id }) {
         const { data: authors } = await axios.get("authors");
         const author = _.find(authors, { id });
-        if (!author) throw new Error("User not found!");
+        if (!author) throw new Error("Author not found!");
         return author;
       },
     },
@@ -100,7 +100,9 @@ const RootMutation = new GraphQLObjectType({
         const { data: authors } = await axios.get("/authors");
         const author = _.find(authors, { id: authorId });
         if (!author)
-          throw new Error(`User with the Author id(${authorId}) was not found`);
+          throw new Error(
+            `Author with the Author id(${authorId}) was not found`
+          );
         const book = {
           id,
           title,
