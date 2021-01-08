@@ -22,7 +22,7 @@ const AuthorType = new GraphQLObjectType({
   fields: () => ({
     id: { type: new GraphQLNonNull(GraphQLID) },
     firstName: { type: new GraphQLNonNull(GraphQLString) },
-    age: { type: new GraphQLNonNull(GraphQLInt) },
+    age: { type: GraphQLInt },
     books: {
       type: new GraphQLList(new GraphQLNonNull(BookType)),
       resolve: async (parent) => {

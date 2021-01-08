@@ -131,7 +131,6 @@ const AuthorList = compose(
 )(_AuthorList);
 
 const _AuthorDetail = (props) => {
-  console.log("AuthorDetail:", props);
   const {
     data: { author: { firstName, age, id, books } = {} },
   } = props;
@@ -149,6 +148,9 @@ const _AuthorDetail = (props) => {
           <li key={book.id}>{book.title}</li>
         ))}
       </ul>
+      <p>
+        <Link to={`/authors/${id}/add-book`}>+Book</Link>
+      </p>
     </Fragment>
   );
 };
@@ -246,28 +248,64 @@ const AddAuthor = compose(
   connect((state) => state)
 )(_AddAuthor);
 
+const AddBook = (props) => {
+  console.log("object", props);
+  const { pathname } = props.location;
+  const index = pathname.lastIndexOf("/");
+  const url = pathname.slice(0, index);
+  return (
+    <Fragment>
+      <p>
+        <Link to={url}>Back</Link>
+      </p>
+      <h1>Add Book</h1>
+    </Fragment>
+  );
+};
+
 const LandingPage = () => (
   <Fragment>
     <h1>React Apollo GraphQL</h1>
     See the list of Authors <Link to="/authors">here</Link>
   </Fragment>
 );
-const Header = () => (
-  <Fragment>
-    <Link to="/">Home</Link>
-  </Fragment>
-);
+const Header = (props) => {
+  console.log("Header:", props.children[1]);
+  return (
+    <Fragment>
+      <Link to="/">Home</Link>
+      {props.children}
+    </Fragment>
+  );
+};
+let xyz = 0;
+class XYZ extends React.Component {
+  state = { ab: this.props.name || "no name" };
+  componentDidMount() {
+    xyz += 2;
+    console.log("Result:", xyz);
+  }
+  render() {
+    return <span>{this.state.ab}</span>;
+  }
+}
 const _App = (props) => {
   return (
     <Fragment>
       <Router>
-        <Fragment>
-          <Header />
-          <Route path="/" exact component={LandingPage} />
-          <Route path="/authors" exact component={AuthorList} />
-          <Route path="/authors/:id" component={AuthorDetail} />
-          <Route path="/add-author" component={AddAuthor} />
-        </Fragment>
+        <Header>
+          <XYZ />
+          <XYZ name="son" />
+          <XYZ name="baba" />
+          <p>
+            hi there <b>so bold</b>
+          </p>
+        </Header>
+        <Route path="/" exact component={LandingPage} />
+        <Route path="/authors" exact component={AuthorList} />
+        <Route exact path="/authors/:id" component={AuthorDetail} />
+        <Route path="/authors/:id/add-book" component={AddBook} />
+        <Route path="/add-author" component={AddAuthor} />
       </Router>
     </Fragment>
   );

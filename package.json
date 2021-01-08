@@ -5,9 +5,10 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon server/server.js -i db.json",
-    "json-server": "json-server --watch db.json",
+    "json-server": "json-server  db.json",
     "start": "PORT=4100 react-scripts start",
     "start:all": "concurrently --names 'json-server,backend,react'  -c 'bgBlue.bold,bgMagenta.bold,bgCyan.bold' 'yarn json-server' 'yarn dev' 'yarn start'",
+    "dev:py": "nodemon -x 'python3 ./playground/refresh.py' -e py",
     "build": "react-scripts build",
     "test": "cross-env PORT=4100 react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
